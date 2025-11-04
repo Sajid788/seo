@@ -141,6 +141,10 @@ app.get("*", (req, res) => {
     const protocol = req.get("x-forwarded-proto") || req.protocol || "http";
     const baseUrl = `${protocol}://${req.get("host")}`;
     
+    // Add random number to title
+    const randomNum = Math.random();
+    pageData.title = `${pageData.title} ${randomNum}`;
+    
     // Debug: Log what title will be set
     console.log(`📄 Serving ${urlPath} with title: "${pageData.title}"`);
 
@@ -179,7 +183,6 @@ app.get("*", (req, res) => {
     );
 
     res.send(html);
-    Math.random();
   } catch (error) {
     console.error("Error serving HTML:", error);
     res.status(500).send("Error loading page");
@@ -196,6 +199,5 @@ app.listen(PORT, () => {
   console.log(`   GET /products - List all products`);
   console.log(`   GET /products/:id - Get product by ID`);
 });
-
 
 
