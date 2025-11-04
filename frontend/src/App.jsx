@@ -9,12 +9,21 @@ import './App.css'
 
 function App({ initialData = {} }) {
   const location = useLocation()
-  const [pageData, setPageData] = useState(initialData || {
-    title: 'React SSR SEO App',
-    description: 'A React app with Server-Side Rendering for dynamic social media previews',
-    image: 'https://via.placeholder.com/1200x630',
-    type: 'website'
-  })
+  const getInitialData = () => {
+    const data = initialData || {
+      title: 'React SSR SEO App',
+      description: 'A React app with Server-Side Rendering for dynamic social media previews',
+      image: 'https://via.placeholder.com/1200x630',
+      type: 'website'
+    }
+    // Add random number to title
+    if (data.title) {
+      data.title = `${data.title} ${Math.random()}`
+    }
+    return data
+  }
+  
+  const [pageData, setPageData] = useState(getInitialData())
   const [loading, setLoading] = useState(false)
 
   // Fetch data from API endpoints when route changes
@@ -60,6 +69,8 @@ function App({ initialData = {} }) {
         }
 
         if (data) {
+          // Add random number to title
+          data.title = `${data.title} ${Math.random()}`
           setPageData(data)
         }
       } catch (error) {
