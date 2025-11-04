@@ -132,6 +132,13 @@ app.use(express.static(path.resolve(__dirname, "public")));
 // Serve HTML for SPA routes with dynamic meta tags (for social media sharing)
 app.get("*", (req, res) => {
   try {
+    // Set cache headers to prevent preview caching
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
     const urlPath = req.url.split("?")[0]; // Remove query params
     const htmlPath = path.resolve(__dirname, "public/index.html");
     let html = fs.readFileSync(htmlPath, "utf8");
@@ -145,6 +152,9 @@ app.get("*", (req, res) => {
     const randomNum = Math.random();
     pageData.title = `${pageData.title} ${randomNum}`;
     
+    // Add random number to og:url to force WhatsApp/preview services to fetch fresh preview
+    const randomUrl = `${baseUrl}${urlPath}?r=${randomNum}`;
+    
     // Debug: Log what title will be set
     console.log(`📄 Serving ${urlPath} with title: "${pageData.title}"`);
 
@@ -153,7 +163,7 @@ app.get("*", (req, res) => {
     <meta property="og:title" content="${escapeHtml(pageData.title)}">
     <meta property="og:description" content="${escapeHtml(pageData.description)}">
     <meta property="og:image" content="${pageData.image}">
-    <meta property="og:url" content="${baseUrl}${urlPath}">
+    <meta property="og:url" content="${randomUrl}">
     <meta property="og:type" content="${pageData.type}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${escapeHtml(pageData.title)}">
@@ -162,6 +172,9 @@ app.get("*", (req, res) => {
     <meta name="description" content="${escapeHtml(pageData.description)}">
     `;
 
+    // Remove existing og: and twitter: meta tags if any
+    html = html.replace(/<meta\s+(property|name)=["'](og:|twitter:)[^>]*>/gi, '');
+    
     // Inject dynamic title
     html = html.replace(
       /<title>.*?<\/title>/i,
@@ -199,5 +212,6 @@ app.listen(PORT, () => {
   console.log(`   GET /products - List all products`);
   console.log(`   GET /products/:id - Get product by ID`);
 });
+
 
 
