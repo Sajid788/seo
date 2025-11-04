@@ -132,11 +132,16 @@ app.use(express.static(path.resolve(__dirname, "public")));
 // Serve HTML for SPA routes with dynamic meta tags (for social media sharing)
 app.get("*", (req, res) => {
   try {
+    // Detect if request is from WhatsApp or other preview services
+    const userAgent = req.get('user-agent') || '';
+    const isPreviewBot = /WhatsApp|facebookexternalhit|Twitterbot|LinkedInBot|Slackbot/i.test(userAgent);
+    
     // Set cache headers to prevent preview caching
     res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
       'Pragma': 'no-cache',
-      'Expires': '0'
+      'Expires': '0',
+      'X-Robots-Tag': 'noindex, nofollow' // Prevent indexing of dynamic previews
     });
     
     const urlPath = req.url.split("?")[0]; // Remove query params
@@ -148,12 +153,14 @@ app.get("*", (req, res) => {
     const protocol = req.get("x-forwarded-proto") || req.protocol || "http";
     const baseUrl = `${protocol}://${req.get("host")}`;
     
-    // Add random number to title
+    // Generate random number and timestamp for cache busting
     const randomNum = Math.random();
+    const timestamp = Date.now(); // Current timestamp for cache busting
     pageData.title = `${pageData.title} ${randomNum}`;
     
-    // Add random number to og:url to force WhatsApp/preview services to fetch fresh preview
-    const randomUrl = `${baseUrl}${urlPath}?r=${randomNum}`;
+    // Add timestamp + random to og:url to force WhatsApp/preview services to fetch fresh preview
+    // WhatsApp caches aggressively, so we use timestamp to ensure fresh fetch
+    const cacheBustUrl = `${baseUrl}${urlPath}?t=${timestamp}&r=${randomNum}`;
     
     // Debug: Log what title will be set
     console.log(`📄 Serving ${urlPath} with title: "${pageData.title}"`);
@@ -163,7 +170,7 @@ app.get("*", (req, res) => {
     <meta property="og:title" content="${escapeHtml(pageData.title)}">
     <meta property="og:description" content="${escapeHtml(pageData.description)}">
     <meta property="og:image" content="${pageData.image}">
-    <meta property="og:url" content="${randomUrl}">
+    <meta property="og:url" content="${cacheBustUrl}">
     <meta property="og:type" content="${pageData.type}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${escapeHtml(pageData.title)}">
@@ -212,6 +219,5 @@ app.listen(PORT, () => {
   console.log(`   GET /products - List all products`);
   console.log(`   GET /products/:id - Get product by ID`);
 });
-
 
 
