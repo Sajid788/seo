@@ -156,14 +156,13 @@ app.get("*", (req, res) => {
     // Generate random number and timestamp for cache busting
     const randomNum = Math.random();
     const timestamp = Date.now(); // Current timestamp for cache busting
+    const originalTitle = pageData.title;
     pageData.title = `${pageData.title} ${randomNum}`;
     
     // Add timestamp + random to og:url to force WhatsApp/preview services to fetch fresh preview
     // WhatsApp caches aggressively, so we use timestamp to ensure fresh fetch
     const cacheBustUrl = `${baseUrl}${urlPath}?t=${timestamp}&r=${randomNum}`;
     
-    // Debug: Log what title will be set
-    console.log(`📄 Serving ${urlPath} with title: "${pageData.title}"`);
 
     // Generate dynamic meta tags for social media
     const metaTags = `
@@ -219,5 +218,3 @@ app.listen(PORT, () => {
   console.log(`   GET /products - List all products`);
   console.log(`   GET /products/:id - Get product by ID`);
 });
-
-
